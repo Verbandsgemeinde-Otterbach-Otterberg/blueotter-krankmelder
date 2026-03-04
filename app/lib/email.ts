@@ -496,7 +496,6 @@ Angaben zum Kind:
   text += `
 
 Technische Informationen:
-- Absender-IP: ${data.sender_ip || '-'}
 - Submission-ID: #${data.id || '-'}
 
 Diese E-Mail wurde automatisch vom Krankmeldungssystem generiert.

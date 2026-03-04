@@ -138,6 +138,7 @@ export default function FileUploadDropzone({
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
             >
@@ -158,6 +159,7 @@ export default function FileUploadDropzone({
             </button>
 
             <button
+              type="button"
               onClick={() => cameraInputRef.current?.click()}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
             >
@@ -216,6 +218,7 @@ export default function FileUploadDropzone({
               </p>
             </div>
             <button
+              type="button"
               onClick={() => {
                 setSelectedFile(null);
                 setError(null);
