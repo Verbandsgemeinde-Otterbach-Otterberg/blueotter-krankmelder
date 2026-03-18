@@ -10,15 +10,18 @@ export async function POST(request: NextRequest) {
       employee_name,
       employee_vorname,
       employee_email,
+      employer,
       employee_id,
       doctor_date,
       from_date,
       to_date,
       is_first_submission,
+      remarks,
     } = body;
+    const normalizedRemarks = typeof remarks === 'string' ? remarks.trim() : '';
 
     // Validate required fields (doctor_date is optional)
-    if (!employee_name || !employee_vorname || !from_date || !to_date) {
+    if (!employee_name || !employee_vorname || !employer || !from_date || !to_date) {
       return NextResponse.json(
         { error: 'Erforderliche Felder fehlen' },
         { status: 400 }
@@ -61,11 +64,13 @@ export async function POST(request: NextRequest) {
       employee_name,
       employee_vorname,
       employee_email,
+      employer,
       employee_id,
       doctor_date: doctor_date || null,
       from_date,
       to_date,
       is_first_submission,
+      remarks: normalizedRemarks || null,
       days_count: validation.daysCount,
       sender_ip: senderIp,
       user_agent: userAgent,

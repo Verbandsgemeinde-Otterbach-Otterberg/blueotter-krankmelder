@@ -403,6 +403,10 @@ function getSubmissionInfo(data: any, timeZone: string): [string, string][] {
     info.push(['Kind (Geburtsdatum):', dob]);
   }
 
+  if (data.remarks) {
+    info.push(['Bemerkung:', data.remarks]);
+  }
+
   return info;
 }
 
@@ -473,6 +477,10 @@ Weitere Details:
 
 Zusätzliche Angaben:
 - E-Mail: ${data.employee_email || '(nicht angegeben)'}`;
+
+  if (data.remarks) {
+    text += `\n- Bemerkung: ${data.remarks}`;
+  }
 
   if (data.type === 'auscan') {
     text += `
@@ -553,7 +561,13 @@ Ihre Meldung:
 Ihre Angaben:
 - Name: ${data.employee_name || '-'}
 - Vorname: ${data.employee_vorname || '-'}
-- Arbeitgeber: ${data.employer || '-'}
+- Arbeitgeber: ${data.employer || '-'}`;
+
+  if (data.remarks) {
+    text += `\n- Bemerkung: ${data.remarks}`;
+  }
+
+  text += `
 
 Abwesenheitszeitraum:`;
 

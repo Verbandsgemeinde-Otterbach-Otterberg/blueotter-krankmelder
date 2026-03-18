@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import SuccessModal from './SuccessModal';
 import Tooltip from './Tooltip';
 import { useRouter } from 'next/navigation';
@@ -9,30 +9,64 @@ interface EAUSubmissionForm {
   employee_name: string;
   employee_vorname: string;
   employee_email: string;
+  employer: string;
   employee_id: string;
   doctor_date: string;
   from_date: string;
   to_date: string;
   is_first_submission: boolean;
+  remarks: string;
+}
+
+interface EmployerOption {
+  name: string;
+  active: boolean;
+  requires_remarks?: boolean;
 }
 
 export default function EAUForm() {
+  const [employers, setEmployers] = useState<EmployerOption[]>([]);
   const [formData, setFormData] = useState<EAUSubmissionForm>({
     employee_name: '',
     employee_vorname: '',
     employee_email: '',
+    employer: '',
     employee_id: '',
     doctor_date: '',
     from_date: '',
     to_date: '',
     is_first_submission: true,
+    remarks: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    const loadEmployers = async () => {
+      try {
+        const res = await fetch('/api/config/employers');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          const mappedEmployers = json.data
+            .map((emp: string | EmployerOption) => {
+              if (typeof emp === 'string') {
+                return { name: emp, active: true, requires_remarks: false };
+              }
+              return { name: emp.name, active: Boolean(emp.active), requires_remarks: Boolean(emp.requires_remarks) };
+            })
+            .filter((emp: EmployerOption) => Boolean(emp.name));
+          setEmployers(mappedEmployers);
+        }
+      } catch (err) {
+        console.error('Error loading employers', err);
+      }
+    };
+    loadEmployers();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'is_first_submission') {
       setFormData(prev => ({ ...prev, [name]: value === 'true' }));
@@ -60,11 +94,13 @@ export default function EAUForm() {
           employee_name: '',
           employee_vorname: '',
           employee_email: '',
+          employer: '',
           employee_id: '',
           doctor_date: '',
           from_date: '',
           to_date: '',
           is_first_submission: true,
+          remarks: '',
         });
         router.push(`/success?id=${data.submissionId}`);
       } else {
@@ -76,6 +112,11 @@ export default function EAUForm() {
       setLoading(false);
     }
   };
+
+  const activeEmployers = employers.filter((emp) => emp.active);
+  const inactiveEmployers = employers.filter((emp) => !emp.active);
+  const selectedEmployer = employers.find((emp) => emp.name === formData.employer);
+  const showRemarksField = Boolean(selectedEmployer?.requires_remarks);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -132,6 +173,37 @@ export default function EAUForm() {
               placeholder="Mustermann"
             />
           </div>
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Arbeitgeber <span className="text-red-500">*</span>
+            </label>
+            <Tooltip text="Wählen Sie Ihren Arbeitgeber aus" position="top" />
+          </div>
+          <select
+            name="employer"
+            value={formData.employer}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+          >
+            <option value="">-- Wählen Sie einen Arbeitgeber --</option>
+            {activeEmployers.map((emp) => (
+              <option key={emp.name} value={emp.name}>
+                {emp.name}
+              </option>
+            ))}
+            {inactiveEmployers.map((emp) => (
+              <option key={emp.name} value={emp.name} disabled className="text-gray-400">
+                {emp.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs text-gray-600">
+            Hinweis: Ausgegraute Arbeitgeber werden zu einem späteren Zeitpunkt für den digitalen Workflow freigeschaltet. Bitte reichen Sie Meldungen dafür bis auf Weiteres auf dem konventionellen Weg ein.
+          </p>
         </div>
 
         <div>
@@ -236,6 +308,25 @@ export default function EAUForm() {
             <option value="false">Folgemeldung</option>
           </select>
         </div>
+
+        {showRemarksField && (
+          <div>
+            <div className="flex items-center gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bemerkung <span className="text-gray-500">(optional)</span>
+              </label>
+              <Tooltip text="Optionales Bemerkungsfeld für zusätzliche Hinweise" position="top" />
+            </div>
+            <textarea
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Optional: zusätzliche Hinweise"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+          </div>
+        )}
 
         <button
           type="submit"
