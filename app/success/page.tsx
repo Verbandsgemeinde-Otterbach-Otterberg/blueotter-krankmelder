@@ -41,8 +41,9 @@ export default function SuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white p-6">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-8 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-green-700">Meldung erfolgreich eingereicht</h1>
-        <p className="text-gray-700 mb-4">Vielen Dank. Ihre Meldung wurde erfolgreich übermittelt.</p>
+        <h1 className="text-2xl font-bold mb-4 text-green-700">Prüfen Sie bitte den Erhalt der Bestätigungsmail</h1>
+        <p className="text-gray-700 mb-4 font-semibold">Wenn Sie die Bestätigungsmail erhalten haben, ist Ihre Meldung erfolgreich eingereicht worden!</p>
+        <p className="text-gray-600 mb-4 text-sm">Bitte überprüfen Sie Ihren Posteingang (auch den Spam-Ordner).</p>
 
         {submissionId && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
