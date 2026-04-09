@@ -13,11 +13,13 @@ interface SimpleSubmissionForm {
   employee_email: string;
   employer: string;
   date: string;
+  remarks: string;
 }
 
 interface EmployerOption {
   name: string;
   active: boolean;
+  requires_remarks?: boolean;
 }
 
 export default function SimpleForm() {
@@ -29,6 +31,7 @@ export default function SimpleForm() {
     employee_email: '',
     employer: '',
     date: '',
+    remarks: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -44,9 +47,9 @@ export default function SimpleForm() {
           const mappedEmployers = json.data
             .map((emp: string | EmployerOption) => {
               if (typeof emp === 'string') {
-                return { name: emp, active: true };
+                return { name: emp, active: true, requires_remarks: false };
               }
-              return { name: emp.name, active: Boolean(emp.active) };
+              return { name: emp.name, active: Boolean(emp.active), requires_remarks: Boolean(emp.requires_remarks) };
             })
             .filter((emp: EmployerOption) => Boolean(emp.name));
           setEmployers(mappedEmployers);
@@ -76,7 +79,7 @@ export default function SimpleForm() {
     calculateAvailableDates();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -97,7 +100,7 @@ export default function SimpleForm() {
 
       if (response.ok) {
         // navigate to shared success page with submission ID
-        setFormData({ employee_name: '', employee_vorname: '', employee_email: '', employer: '', date: '' });
+        setFormData({ employee_name: '', employee_vorname: '', employee_email: '', employer: '', date: '', remarks: '' });
         router.push(`/success?id=${data.submissionId}`);
       } else {
         setMessage({ type: 'error', text: data.error || data.message || 'Ein Fehler ist aufgetreten' });
@@ -116,6 +119,8 @@ export default function SimpleForm() {
 
   const activeEmployers = employers.filter((emp) => emp.active);
   const inactiveEmployers = employers.filter((emp) => !emp.active);
+  const selectedEmployer = employers.find((emp) => emp.name === formData.employer);
+  const showRemarksField = Boolean(selectedEmployer?.requires_remarks);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -169,6 +174,23 @@ export default function SimpleForm() {
           </div>
           <input type="hidden" name="date" value={formData.date} />
         </div>
+
+        {showRemarksField && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Bemerkung (optional)</label>
+            <textarea
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Optional: zusätzliche Hinweise"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+            <p className="mt-2 text-xs text-gray-600">
+              Für diesen Arbeitgeber kann eine zusätzliche Bemerkung mitgesendet werden.
+            </p>
+          </div>
+        )}
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">

@@ -58,6 +58,7 @@ interface EmployerSetting {
   sb_emails?: string[];
   subject_prefix: string | null;
   send_global_copy?: boolean;
+  requires_remarks?: boolean;
 }
 
 export default function Dashboard() {
@@ -1282,7 +1283,8 @@ function EmployersTab() {
           initialEditing[setting.employer] = {
             emails: setting.sb_emails || [],
             prefix: setting.subject_prefix || '',
-            sendGlobalCopy: setting.send_global_copy || false
+            sendGlobalCopy: setting.send_global_copy || false,
+            requiresRemarks: setting.requires_remarks || false
           };
         });
         setEditingSettings(initialEditing);
@@ -1443,20 +1445,27 @@ function EmployersTab() {
     }
   };
 
-  const saveEmployerSetting = async (employer: string, sbEmails: string[], subjectPrefix: string, sendGlobalCopy: boolean = false) => {
+  const saveEmployerSetting = async (
+    employer: string,
+    sbEmails: string[],
+    subjectPrefix: string,
+    sendGlobalCopy: boolean = false,
+    requiresRemarks: boolean = false
+  ) => {
     setSavingId(employers.find(e => e.name === employer)?.id || null);
     try {
       const emailArray = sbEmails.filter(e => e.trim());
-      if (emailArray.length === 0) {
-        alert('Bitte mindestens eine E-Mail-Adresse angeben');
-        setSavingId(null);
-        return;
-      }
-      
+
       const response = await fetch('/api/employer-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employer, sb_emails: emailArray, subject_prefix: subjectPrefix, send_global_copy: sendGlobalCopy }),
+        body: JSON.stringify({
+          employer,
+          sb_emails: emailArray,
+          subject_prefix: subjectPrefix,
+          send_global_copy: sendGlobalCopy,
+          requires_remarks: requiresRemarks,
+        }),
       });
       const data = await response.json();
       if (data.success) {
@@ -1612,13 +1621,7 @@ function SettingsTab() {
     setLoading(true);
     try {
       const emailArray = Array.isArray(sbEmails) ? sbEmails.filter(e => e.trim()) : sbEmails.split(',').map(s=>s.trim()).filter(Boolean);
-      
-      if (emailArray.length === 0) {
-        alert('Bitte mindestens eine E-Mail-Adresse angeben');
-        setLoading(false);
-        return;
-      }
-      
+
       const response = await fetch('/api/employer-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2485,7 +2488,8 @@ function EmployerCard({
   const editing = editingSettings[employer.name] || {
     emails: settings?.sb_emails || [],
     prefix: settings?.subject_prefix || '',
-    sendGlobalCopy: settings?.send_global_copy || false
+    sendGlobalCopy: settings?.send_global_copy || false,
+    requiresRemarks: settings?.requires_remarks || false
   };
 
   // Now hooks can be called at the top level
@@ -2692,6 +2696,24 @@ function EmployerCard({
                 </label>
               </div>
 
+              <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id={`requires-remarks-${employer.id}`}
+                  checked={editing.requiresRemarks || false}
+                  onChange={(e) => {
+                    setEditingSettings((prev: any) => ({
+                      ...prev,
+                      [employer.name]: { ...editing, requiresRemarks: e.target.checked }
+                    }));
+                  }}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <label htmlFor={`requires-remarks-${employer.id}`} className="text-sm text-gray-700 cursor-pointer">
+                  Freies Bemerkungsfeld im Formular anzeigen (optional)
+                </label>
+              </div>
+
               {/* Save Button */}
               <button
                 onClick={() => {
@@ -2699,7 +2721,8 @@ function EmployerCard({
                     employer.name,
                     editing.emails,
                     editing.prefix,
-                    editing.sendGlobalCopy
+                    editing.sendGlobalCopy,
+                    editing.requiresRemarks
                   );
                 }}
                 disabled={savingId === employer.id}

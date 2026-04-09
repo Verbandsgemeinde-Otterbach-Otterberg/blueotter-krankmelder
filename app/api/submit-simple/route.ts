@@ -12,7 +12,9 @@ export async function POST(request: NextRequest) {
       employer,
       date,
       employee_email,
+      remarks,
     } = body;
+    const normalizedRemarks = typeof remarks === 'string' ? remarks.trim() : '';
 
     // Validate required fields
     if (!employee_name || !employee_vorname || !employer || !date) {
@@ -49,6 +51,7 @@ export async function POST(request: NextRequest) {
       employer,
       date,
       employee_email,
+      remarks: normalizedRemarks || null,
       sender_ip: senderIp,
       user_agent: userAgent,
       timestamp: new Date().toISOString(),

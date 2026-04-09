@@ -1,15 +1,26 @@
 import { NextResponse } from 'next/server';
-import { getAllEmployers, addEmployer } from '@/app/lib/db';
+import { getAllEmployers, addEmployer, getAllEmployerSettings } from '@/app/lib/db';
 
 export async function GET() {
   try {
     const employers = getAllEmployers();
+    const settingsMap = Object.fromEntries(
+      getAllEmployerSettings().map((setting) => [setting.employer, setting])
+    );
     const activeEmployers = employers
       .filter((e) => Boolean(e.active))
-      .map((e) => ({ name: e.name, active: true }));
+      .map((e) => ({
+        name: e.name,
+        active: true,
+        requires_remarks: Boolean(settingsMap[e.name]?.requires_remarks),
+      }));
     const inactiveEmployers = employers
       .filter((e) => !Boolean(e.active))
-      .map((e) => ({ name: e.name, active: false }));
+      .map((e) => ({
+        name: e.name,
+        active: false,
+        requires_remarks: Boolean(settingsMap[e.name]?.requires_remarks),
+      }));
 
     // Active employers first, inactive employers at the end.
     return NextResponse.json({ success: true, data: [...activeEmployers, ...inactiveEmployers] });

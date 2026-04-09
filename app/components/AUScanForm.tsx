@@ -16,11 +16,13 @@ interface AUSubmissionForm {
   to_date: string;
   is_first_cert: boolean;
   au_scan: File | null;
+  remarks: string;
 }
 
 interface EmployerOption {
   name: string;
   active: boolean;
+  requires_remarks?: boolean;
 }
 
 export default function AUScanForm() {
@@ -35,6 +37,7 @@ export default function AUScanForm() {
     to_date: '',
     is_first_cert: true,
     au_scan: null,
+    remarks: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -50,9 +53,9 @@ export default function AUScanForm() {
           const mappedEmployers = json.data
             .map((emp: string | EmployerOption) => {
               if (typeof emp === 'string') {
-                return { name: emp, active: true };
+                return { name: emp, active: true, requires_remarks: false };
               }
-              return { name: emp.name, active: Boolean(emp.active) };
+              return { name: emp.name, active: Boolean(emp.active), requires_remarks: Boolean(emp.requires_remarks) };
             })
             .filter((emp: EmployerOption) => Boolean(emp.name));
           setEmployers(mappedEmployers);
@@ -64,7 +67,7 @@ export default function AUScanForm() {
     loadEmployers();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'is_first_cert') {
       setFormData(prev => ({ ...prev, [name]: value === 'true' }));
@@ -92,6 +95,7 @@ export default function AUScanForm() {
       formDataToSend.append('from_date', formData.from_date);
       formDataToSend.append('to_date', formData.to_date);
       formDataToSend.append('is_first_cert', formData.is_first_cert.toString());
+      formDataToSend.append('remarks', formData.remarks);
       if (formData.au_scan) {
         formDataToSend.append('au_scan', formData.au_scan);
       }
@@ -114,6 +118,7 @@ export default function AUScanForm() {
           to_date: '',
           is_first_cert: true,
           au_scan: null,
+          remarks: '',
         });
         router.push(`/success?id=${data.submissionId}`);
       } else {
@@ -128,6 +133,8 @@ export default function AUScanForm() {
 
   const activeEmployers = employers.filter((emp) => emp.active);
   const inactiveEmployers = employers.filter((emp) => !emp.active);
+  const selectedEmployer = employers.find((emp) => emp.name === formData.employer);
+  const showRemarksField = Boolean(selectedEmployer?.requires_remarks);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -304,6 +311,25 @@ export default function AUScanForm() {
             <option value="false">Folgebescheinigung</option>
           </select>
         </div>
+
+        {showRemarksField && (
+          <div>
+            <div className="flex items-center gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bemerkung <span className="text-gray-500">(optional)</span>
+              </label>
+              <Tooltip text="Optionales Bemerkungsfeld für zusätzliche Hinweise" position="top" />
+            </div>
+            <textarea
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Optional: zusätzliche Hinweise"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+          </div>
+        )}
 
         <div>
           <div className="flex items-center gap-2">

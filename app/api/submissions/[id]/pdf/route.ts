@@ -226,12 +226,12 @@ function getSubmissionInfo(data: any, timeZone: string): [string, string][] {
   }
 
   // Additional notes or fields
-  if (data.notes) {
-    info.push(['Notizen:', data.notes]);
+  if (data.remarks) {
+    info.push(['Bemerkung:', data.remarks]);
   }
 
-  if (data.remarks) {
-    info.push(['Besonderheiten:', data.remarks]);
+  if (data.notes) {
+    info.push(['Notizen:', data.notes]);
   }
 
   return info;

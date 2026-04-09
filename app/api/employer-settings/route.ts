@@ -18,6 +18,7 @@ export async function GET() {
       sb_emails: settingsMap[e.name]?.sb_emails || [],
       subject_prefix: settingsMap[e.name]?.subject_prefix || null,
       send_global_copy: settingsMap[e.name]?.send_global_copy || false,
+      requires_remarks: settingsMap[e.name]?.requires_remarks || false,
       active: !!e.active,
       color: e.color || '#3B82F6'
     }));
@@ -31,13 +32,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { employer, sb_emails, sb_email, subject_prefix, send_global_copy } = await request.json();
+    const { employer, sb_emails, sb_email, subject_prefix, send_global_copy, requires_remarks } = await request.json();
     if (!employer) {
       return NextResponse.json({ success: false, error: 'Arbeitgeber erforderlich' }, { status: 400 });
     }
     // Prefer sb_emails (array). Accept comma-separated sb_email for backward compatibility.
     const emails = Array.isArray(sb_emails) ? sb_emails : (sb_email ? sb_email.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
-    setEmployerSettings(employer, emails, subject_prefix || '', send_global_copy);
+    setEmployerSettings(employer, emails, subject_prefix || '', send_global_copy, requires_remarks);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error saving employer setting:', error);

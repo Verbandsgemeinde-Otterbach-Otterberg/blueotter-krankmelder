@@ -78,6 +78,7 @@ function initializeDatabase() {
       sb_email TEXT,
       sb_emails TEXT,
       send_global_copy INTEGER DEFAULT 0,
+      requires_remarks INTEGER DEFAULT 0,
       subject_prefix TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -162,6 +163,7 @@ function initializeDatabase() {
     const hasSbEmails = esCols.some((c) => c && c.name === 'sb_emails');
     const hasSendGlobal = esCols.some((c) => c && c.name === 'send_global_copy');
     const hasGlobalEmail = esCols.some((c) => c && c.name === 'global_email');
+    const hasRequiresRemarks = esCols.some((c) => c && c.name === 'requires_remarks');
     if (!hasSbEmails) {
       db.exec("ALTER TABLE employer_settings ADD COLUMN sb_emails TEXT DEFAULT '[]'");
       // If old sb_email exists, migrate to sb_emails as single-element JSON array
@@ -181,6 +183,9 @@ function initializeDatabase() {
     }
     if (!hasGlobalEmail) {
       db.exec('ALTER TABLE employer_settings ADD COLUMN global_email TEXT');
+    }
+    if (!hasRequiresRemarks) {
+      db.exec('ALTER TABLE employer_settings ADD COLUMN requires_remarks INTEGER DEFAULT 0');
     }
   } catch (e) {
     console.error('Error ensuring employer_settings columns exist:', e);
@@ -236,30 +241,45 @@ export function getSubjectPrefixForEmployer(employer: string): string | null {
   return row?.subject_prefix || null;
 }
 
-export function setEmployerSettings(employer: string, sbEmails: string[] | string, subjectPrefix: string, sendGlobalCopy?: boolean) {
+export function setEmployerSettings(
+  employer: string,
+  sbEmails: string[] | string,
+  subjectPrefix: string,
+  sendGlobalCopy?: boolean,
+  requiresRemarks?: boolean
+) {
   const db = getDb();
   const emailsJson = typeof sbEmails === 'string' ? JSON.stringify(sbEmails ? sbEmails.split(',').map(s => s.trim()).filter(Boolean) : []) : JSON.stringify(sbEmails || []);
   db.prepare(`
-    INSERT INTO employer_settings (employer, sb_emails, sb_email, subject_prefix, send_global_copy, updated_at)
-    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO employer_settings (employer, sb_emails, sb_email, subject_prefix, send_global_copy, requires_remarks, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(employer) DO UPDATE SET
       sb_emails = excluded.sb_emails,
       sb_email = excluded.sb_email,
       subject_prefix = excluded.subject_prefix,
       send_global_copy = excluded.send_global_copy,
+      requires_remarks = excluded.requires_remarks,
       updated_at = CURRENT_TIMESTAMP
-  `).run(employer, emailsJson, (JSON.parse(emailsJson)[0] || null), subjectPrefix, sendGlobalCopy ? 1 : 0);
+  `).run(
+    employer,
+    emailsJson,
+    (JSON.parse(emailsJson)[0] || null),
+    subjectPrefix,
+    sendGlobalCopy ? 1 : 0,
+    requiresRemarks ? 1 : 0
+  );
 }
 
 export function getAllEmployerSettings() {
   const db = getDb();
-  const rows = db.prepare('SELECT employer, sb_email, sb_emails, subject_prefix, send_global_copy FROM employer_settings').all() as any[];
+  const rows = db.prepare('SELECT employer, sb_email, sb_emails, subject_prefix, send_global_copy, requires_remarks FROM employer_settings').all() as any[];
   return rows.map(r => ({
     employer: r.employer,
     sb_email: r.sb_email || null,
     sb_emails: r.sb_emails ? (JSON.parse(r.sb_emails) || []) : [],
     subject_prefix: r.subject_prefix || null,
-    send_global_copy: r.send_global_copy ? true : false
+    send_global_copy: r.send_global_copy ? true : false,
+    requires_remarks: r.requires_remarks ? true : false
   }));
 }
 

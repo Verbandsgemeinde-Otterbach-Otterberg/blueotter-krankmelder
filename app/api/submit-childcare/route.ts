@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     const to_date = formData.get('to_date') as string;
     const is_first_cert = formData.get('is_first_cert') === 'true';
     const au_file = formData.get('au_file') as File | null;
+    const remarks = ((formData.get('remarks') as string) || '').trim();
 
     // Validate required fields
     // For Folgebescheinigung (is_first_cert=false), from_date is not required (will be derived from predecessor)
@@ -136,6 +137,7 @@ export async function POST(request: NextRequest) {
       from_date,
       to_date,
       is_first_cert,
+      remarks: remarks || null,
       days_count: validation.daysCount,
       sender_ip: senderIp,
       user_agent: userAgent,
