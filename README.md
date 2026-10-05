@@ -2,6 +2,9 @@
 
 Web application for structured sickness reporting in municipal operations.
 
+> **Hinweis / Note:** Der Krankmelder ist jetzt auch als vollintegriertes, abschaltbares Modul „BlueOtter Krankmelder“ im Verwaltungsportal [jitsii-speechmind](https://github.com/derdigitalaffine/jitsii-speechmind) verfügbar – mit Portal-Konten und -Rechten, Zuständigkeit je Arbeitgeber, verschlüsselter Speicherung, Statusseite, eAU-Abruf-Status, optionaler eigener Domain und Import der Daten dieser Anwendung (ZIP mit `data/krankmeldungen.db` und `uploads/`). Details: Admin-Handbuch des Portals, Abschnitt „BlueOtter Krankmelder“.
+> The sickness reporting workflow is now also available as an integrated, switchable module of the [jitsii-speechmind](https://github.com/derdigitalaffine/jitsii-speechmind) portal, including an importer for data from this application.
+
 ## Executive Summary (DE)
 
 Der BlueOtter Krankmelder digitalisiert Krankmeldungen in einem klaren, nachvollziehbaren Ablauf für öffentliche Einrichtungen.
