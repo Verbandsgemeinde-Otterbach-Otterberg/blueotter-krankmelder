@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { createTransport, type Transporter } from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import jsPDF from 'jspdf';
@@ -19,7 +19,7 @@ interface EmailOptions {
   }>;
 }
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: Transporter | null = null;
 let lastSmtpConfig: { host?: string; port?: number; user?: string; pass?: string } | null = null;
 
 function getTransporter() {
@@ -45,7 +45,7 @@ function getTransporter() {
     lastSmtpConfig.pass !== currentConfig.pass;
 
   if (!transporter || configChanged) {
-    transporter = nodemailer.createTransport({
+    transporter = createTransport({
       host: smtpHost,
       port: smtpPort,
       secure: smtpPort === 465,
