@@ -33,6 +33,10 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=24"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.6.2": true,
+    "core-js@3.48.0": false
   }
 }

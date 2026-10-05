@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+.next
+out
+build
+data
+uploads
+*.db
+*.db-*
+.env*
+!.env.example
+npm-debug.log*
+Dockerfile
+docker-compose.yml
+.dockerignore

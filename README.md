@@ -38,8 +38,8 @@ Detailed docs:
 
 Prerequisites:
 
-- Node.js 22.13+ (Node.js 24 LTS recommended; see `.nvmrc`)
-- npm 10+
+- Node.js 24 LTS (see `.nvmrc`)
+- npm 11+
 
 Install and run:
 
@@ -55,6 +55,15 @@ npm run build
 ```
 
 App default URL: `http://localhost:3000`
+
+## Docker
+
+```bash
+cp .env.example .env   # fill in values incl. SESSION_SECRET
+docker compose up -d --build
+```
+
+Run behind an HTTPS reverse proxy. Details: [Operations](docs/OPERATIONS.md#docker-deployment-recommended).
 
 ## Configuration
 

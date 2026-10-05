@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    image: blueotter-krankmelder:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:3000:3000" # nur lokal; davor einen TLS-Reverse-Proxy betreiben
+    volumes:
+      - data:/app/data
+      - uploads:/app/uploads
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  data:
+  uploads:

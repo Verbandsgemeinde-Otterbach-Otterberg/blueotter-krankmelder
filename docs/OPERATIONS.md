@@ -2,8 +2,8 @@
 
 ## Runtime Requirements
 
-- Node.js 22.13+ (Node.js 24 LTS recommended; see `.nvmrc`)
-- npm 10+
+- Node.js 24 LTS (see `.nvmrc`)
+- npm 11+
 - Writable local directories for runtime:
   - `data/`
   - `uploads/`
@@ -23,6 +23,28 @@ Minimum operational groups:
 - Routing: `SB_EMAIL`, optional employer-level overrides
 - Access control: `PUBLIC_PASSWORD`, `DASHBOARD_USER`, `DASHBOARD_PASSWORD`
 - Storage: `DATABASE_URL`, `UPLOAD_DIR`
+
+## Docker Deployment (recommended)
+
+The image (`Dockerfile`) uses Node.js 24 LTS on Debian trixie-slim, runs as the unprivileged `node` user, ships without npm and serves the Next.js standalone build. SQLite data lives in `/app/data`, uploads in `/app/uploads` (both volumes).
+
+```bash
+cp .env.example .env        # fill in values, set a random SESSION_SECRET (openssl rand -hex 32)
+docker compose up -d --build
+docker compose logs -f
+```
+
+`docker-compose.yml` runs the container read-only with all capabilities dropped and `no-new-privileges`, and binds port 3000 only to `127.0.0.1`.
+
+Requirements and notes:
+
+- Run it behind a TLS reverse proxy (nginx, Caddy, Traefik). In production the session cookie is `Secure`, so the admin login only works over HTTPS. The proxy must forward the original `Host` header (or `X-Forwarded-Host`).
+- Security updates: rebuild regularly so the latest Node.js 24 patch release and Debian fixes are picked up:
+  ```bash
+  docker compose build --pull && docker compose up -d
+  ```
+- Backup: back up the `data` and `uploads` volumes.
+- Native module approval: npm 11+ only runs install scripts listed in `allowScripts` in `package.json`. After upgrading `better-sqlite3`, approve the new version with `npm install-scripts approve better-sqlite3`.
 
 ## Start Commands
 
