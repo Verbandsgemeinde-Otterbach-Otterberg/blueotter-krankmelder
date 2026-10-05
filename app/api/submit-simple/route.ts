@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const result = stmt.run(
       'simple',
-      'accepted',
+      'new',
       `${employee_name} ${employee_vorname}`,
       employee_email,
       senderIp,

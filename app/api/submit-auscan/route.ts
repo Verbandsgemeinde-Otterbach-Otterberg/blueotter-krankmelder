@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     const result = stmt.run(
       'auscan',
-      'accepted',
+      'new',
       `${employee_name} ${employee_vorname}`,
       employee_email,
       senderIp,

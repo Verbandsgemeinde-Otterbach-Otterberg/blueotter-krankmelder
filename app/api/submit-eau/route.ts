@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     const result = stmt.run(
       'eau',
-      'accepted',
+      'new',
       employee_name,
       employee_email,
       employee_id,

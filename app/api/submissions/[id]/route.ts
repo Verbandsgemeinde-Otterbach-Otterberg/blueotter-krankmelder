@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/app/lib/auth';
+import { getSession, requireAdmin } from '@/app/lib/auth';
+import { isSubmissionStatus } from '@/app/lib/status';
 import { getDb } from '@/app/lib/db';
 import fs from 'fs';
 
@@ -53,5 +54,48 @@ export async function DELETE(request: NextRequest, { params }: { params: any }) 
   } catch (error) {
     console.error('Error deleting submission:', error);
     return NextResponse.json({ success: false, error: 'Fehler beim Löschen' }, { status: 500 });
+  }
+}
+
+/** Update the processing status of a submission ('new' | 'processed'). */
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
+  try {
+    const id = parseInt((await params).id ?? '');
+    if (isNaN(id)) return NextResponse.json({ success: false, error: 'Invalid id' }, { status: 400 });
+
+    const { status } = await request.json();
+    if (!isSubmissionStatus(status)) {
+      return NextResponse.json({ success: false, error: 'Ungültiger Status' }, { status: 400 });
+    }
+
+    const username = getSession(request)?.username ?? null;
+    const db = getDb();
+    const result = db
+      .prepare(
+        `UPDATE submissions
+           SET status = ?,
+               processed_at = CASE WHEN ? = 'processed' THEN CURRENT_TIMESTAMP ELSE NULL END,
+               processed_by = CASE WHEN ? = 'processed' THEN ? ELSE NULL END,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`
+      )
+      .run(status, status, status, username, id);
+    if (result.changes === 0) {
+      return NextResponse.json({ success: false, error: 'Meldung nicht gefunden' }, { status: 404 });
+    }
+
+    db.prepare('INSERT INTO audit_log (submission_id, action, details) VALUES (?, ?, ?)').run(
+      id,
+      'status_changed',
+      JSON.stringify({ status, by: username })
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error updating submission status:', error);
+    return NextResponse.json({ success: false, error: 'Fehler beim Aktualisieren' }, { status: 500 });
   }
 }

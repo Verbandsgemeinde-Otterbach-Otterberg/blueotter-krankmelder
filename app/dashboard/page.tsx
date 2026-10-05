@@ -20,6 +20,7 @@ import Link from 'next/link';
 import PasswordGate from '@/app/components/PasswordGate';
 import MarkdownEditor from '@/app/components/MarkdownEditor';
 import { DEFAULT_TIMEZONE, formatDateInTimeZone, formatDateTimeInTimeZone, normalizeTimeZone } from '@/app/lib/timezone';
+import { STATUS_LABELS } from '@/app/lib/status';
 import { Calendar, Users, FileText, AlertTriangle, CheckCircle, Clock, Download, Search, Filter, BarChart3, Settings, Mail, Archive, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Submission {
@@ -139,15 +140,11 @@ function DashboardContent() {
     childcare: 'Kind krank'
   };
 
-  const statusLabels = {
-    accepted: 'Akzeptiert',
-    pending: 'Ausstehend',
-    needs_au: 'AU erforderlich'
-  };
+  const statusLabels = STATUS_LABELS;
 
   const statusColors = {
-    accepted: 'bg-green-600 text-white',
-    pending: 'bg-yellow-500 text-black',
+    new: 'bg-yellow-500 text-black',
+    processed: 'bg-green-600 text-white',
     needs_au: 'bg-red-600 text-white'
   };
 
@@ -494,9 +491,9 @@ function OverviewTab({ stats, loading, typeLabels, statusLabels, statusColors, f
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-3 h-3 rounded-full ${
-                      status === 'accepted'
+                      status === 'processed'
                         ? 'bg-green-500'
-                        : status === 'pending'
+                        : status === 'new'
                           ? 'bg-yellow-500'
                           : 'bg-red-500'
                     }`}
@@ -509,9 +506,9 @@ function OverviewTab({ stats, loading, typeLabels, statusLabels, statusColors, f
                   <div className="w-20 bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${
-                        status === 'accepted'
+                        status === 'processed'
                           ? 'bg-green-500'
-                          : status === 'pending'
+                          : status === 'new'
                             ? 'bg-yellow-500'
                             : 'bg-red-500'
                       }`}
@@ -710,11 +707,7 @@ function SubmissionsTab({ loadStats, timeZone }: { loadStats: () => void; timeZo
       childcare: 'Kind krank'
     };
 
-    const statusLabels = {
-      accepted: 'Akzeptiert',
-      pending: 'Ausstehend',
-      needs_au: 'AU erforderlich'
-    };
+    const statusLabels = STATUS_LABELS;
 
     const headers = ['ID', 'Typ', 'Status', 'Mitarbeiter Name', 'Mitarbeiter Vorname', 'E-Mail', 'Arbeitgeber', 'Start Datum', 'End Datum', 'Erstellt am'];
     const csvData = submissions.map(sub => {
@@ -776,6 +769,27 @@ function SubmissionsTab({ loadStats, timeZone }: { loadStats: () => void; timeZo
     }
   };
 
+  const toggleProcessed = async (submission: Submission) => {
+    const status = submission.status === 'processed' ? 'new' : 'processed';
+    try {
+      const response = await fetch(`/api/submissions/${submission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchSubmissions();
+        loadStats();
+      } else {
+        alert(`Fehler beim Ändern des Status: ${data.error || 'Unbekannter Fehler'}`);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Fehler beim Ändern des Status');
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     try {
       return formatDateInTimeZone(dateStr, timeZone);
@@ -816,15 +830,11 @@ function SubmissionsTab({ loadStats, timeZone }: { loadStats: () => void; timeZo
     childcare: 'Kind krank'
   };
 
-  const statusLabels = {
-    accepted: 'Akzeptiert',
-    pending: 'Ausstehend',
-    needs_au: 'AU erforderlich'
-  };
+  const statusLabels = STATUS_LABELS;
 
   const statusColors = {
-    accepted: 'bg-green-100 text-green-800',
-    pending: 'bg-yellow-100 text-yellow-800',
+    new: 'bg-yellow-100 text-yellow-800',
+    processed: 'bg-green-100 text-green-800',
     needs_au: 'bg-red-100 text-red-800'
   };
 
@@ -875,9 +885,8 @@ function SubmissionsTab({ loadStats, timeZone }: { loadStats: () => void; timeZo
                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               >
                 <option value="">Alle Status</option>
-                <option value="accepted">Akzeptiert</option>
-                <option value="pending">Ausstehend</option>
-                <option value="needs_au">AU erforderlich</option>
+                <option value="new">Neu</option>
+                <option value="processed">Bearbeitet</option>
               </select>
             </div>
 
@@ -1059,6 +1068,17 @@ function SubmissionsTab({ loadStats, timeZone }: { loadStats: () => void; timeZo
                         {visibleColumns.actions && (
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => toggleProcessed(submission)}
+                                className={`inline-flex items-center px-2.5 py-1.5 border rounded text-xs font-semibold transition-colors ${
+                                  submission.status === 'processed'
+                                    ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                                    : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
+                                }`}
+                                title={submission.status === 'processed' ? 'Wieder als neu markieren' : 'Als bearbeitet markieren'}
+                              >
+                                {submission.status === 'processed' ? '↩ Neu' : '✓ Bearbeitet'}
+                              </button>
                               <a
                                 href={`/api/submissions/${submission.id}/pdf`}
                                 target="_blank"
