@@ -67,6 +67,59 @@ cp .env.example .env.local
 
 Reference file: `.env.example`
 
+## Docker Setup
+
+For containerized deployment the repository ships a multi-stage `Dockerfile` and two Compose files. The image runs the Next.js standalone server as a non-root user with persistent volumes for the SQLite database and uploaded files.
+
+Prerequisites:
+
+- Docker 24+
+- Docker Compose v2 (`docker compose` plugin)
+- A populated `.env.local` (see [Configuration](#configuration))
+
+### Quick start (local build)
+
+Build the image from source and start the container:
+
+```bash
+docker compose up --build
+```
+
+The app is available at `http://localhost:3000`. Data and uploads are persisted in the named volumes `krankmelder-data` and `krankmelder-uploads` and survive container restarts.
+
+Stop and remove the container (volumes are kept):
+
+```bash
+docker compose down
+```
+
+### Production-style run
+
+`docker-compose.prod.yml` expects a prebuilt image (`pull_policy: never`) and adds an HTTP healthcheck against `http://127.0.0.1:3000/`. Typical workflow:
+
+```bash
+docker build -t blueotter-krankmelder:latest .
+docker compose -f docker-compose.prod.yml up -d
+```
+
+To move the image to an offline target host, export and import it:
+
+```bash
+# on the build machine:
+docker save blueotter-krankmelder:latest -o blueotter-krankmelder.tar
+
+# on the target host:
+docker load -i blueotter-krankmelder.tar
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Notes
+
+- `.env.local` is read at container start via `env_file` and is excluded from the image by `.dockerignore`, so secrets never end up baked into the image.
+- `next.config.ts` enables `output: "standalone"` and force-includes `better-sqlite3` in the file trace. This produces a slim runtime image and ensures the native SQLite bindings are present.
+- The container runs as a non-root user (`nextjs:nodejs`, UID 1001) and uses `tini` as PID 1 for proper signal handling.
+- `docker compose down -v` removes the named volumes and therefore drops all persisted reports and uploads. Run this only if you intentionally want a clean slate.
+
 ## Data and Security Notes
 
 - This repository is prepared for code-first publishing.

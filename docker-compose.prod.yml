@@ -1,0 +1,27 @@
+services:
+  krankmelder:
+    image: blueotter-krankmelder:latest
+    pull_policy: never
+    container_name: blueotter-krankmelder
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: /app/data/krankmeldungen.db
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - krankmelder-data:/app/data
+      - krankmelder-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  krankmelder-data:
+  krankmelder-uploads:

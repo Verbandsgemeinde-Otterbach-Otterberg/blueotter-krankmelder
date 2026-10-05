@@ -1,0 +1,46 @@
+**/node_modules
+**/.next
+**/.git
+**/.gitignore
+**/.vscode
+**/.idea
+**/.DS_Store
+
+# Build / Cache
+**/dist
+**/build
+**/out
+**/coverage
+**/*.tsbuildinfo
+
+# Env & secrets (kommen über --env-file ins Image-Runtime)
+.env
+.env.local
+.env.*.local
+
+# Runtime-Daten und Backups
+data/
+uploads/
+artifacts/
+*.db
+*.db-shm
+*.db-wal
+*.backup
+
+# Lokale Dokumente
+doku2.md
+manual.html
+manual-assets/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Docker selbst
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.ps1
+*.tar
