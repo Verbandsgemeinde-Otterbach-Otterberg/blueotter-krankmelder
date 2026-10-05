@@ -4,139 +4,79 @@ Web application for structured sickness reporting in municipal operations.
 
 ## Executive Summary (DE)
 
-Der BlueOtter Krankmelder digitalisiert Krankmeldungen in einem klaren, nachvollziehbaren Ablauf fuer oeffentliche Einrichtungen.  
-Der Fokus liegt auf sicherem Betrieb, wartbarer Architektur und praktikablen Verwaltungsprozessen.
+Der BlueOtter Krankmelder digitalisiert Krankmeldungen in einem klaren, nachvollziehbaren Ablauf für öffentliche Einrichtungen.
+Beschäftigte melden sich über ein Webformular krank, die Personalverwaltung erhält die Meldung per E-Mail und bearbeitet sie im geschützten Dashboard.
 
 ## Executive Summary (EN)
 
-BlueOtter Krankmelder is a municipal workflow app for secure and reliable sickness reporting.  
-The project emphasizes operational clarity, maintainable engineering, and privacy-aware processing.
+BlueOtter Krankmelder is a municipal workflow app for secure and reliable sickness reporting.
+Employees submit reports through a web form; HR receives them by email and processes them in a protected admin dashboard.
 
 ## Core Features
 
-- Three reporting flows: simple sickness report, report with AU upload, childcare-related report.
-- Admin dashboard for employer management, routing rules, and global settings.
-- Configurable SMTP dispatch and recipient logic.
-- SQLite-backed operational configuration and reporting metadata.
-- CMS-like content endpoints for managed text content.
+- Four reporting flows: simple report (without AU), report with AU upload, eAU information, child sick leave.
+- Email notification to the responsible clerks (routing per employer) and optional confirmation to the employee.
+- PDF generation per report; the submitter can download it once via a short-lived link.
+- Admin dashboard: overview and statistics, report list with filters, CSV export, processing status (**Neu** / **Bearbeitet**), employer management, email routing, global settings, editable instructions page.
+- SQLite storage, no external database needed.
 
-## Architecture Snapshot
+## Tech Stack
 
-- Frontend and API: Next.js App Router (TypeScript, React).
-- Styling: Tailwind CSS.
-- Persistence: SQLite via `better-sqlite3`.
-- Mail delivery: Nodemailer over SMTP.
-- File handling: validated uploads for AU-related forms.
+- Next.js 16 (App Router, TypeScript, React 19), Tailwind CSS 4
+- SQLite via `better-sqlite3`
+- Nodemailer (SMTP), jsPDF
+- Node.js 24 LTS, Docker
 
-Detailed docs:
+## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Operations](docs/OPERATIONS.md)
-- [Security](docs/SECURITY.md)
+- [Architecture](docs/ARCHITECTURE.md) – components, data flow, API, data model
+- [Operations](docs/OPERATIONS.md) – configuration, Docker deployment, updates, backups
+- [Security](docs/SECURITY.md) – authentication, protections, hardening checklist
 
-## Local Setup
+## Quick Start (Docker, recommended)
 
-Prerequisites:
-
-- Node.js 20+
-- npm 10+
-
-Install and run:
+Requirements: Docker 24+ with Docker Compose v2, an HTTPS reverse proxy for production.
 
 ```bash
+cp .env.example .env.local      # fill in SMTP, passwords and SESSION_SECRET
+docker compose up -d --build
+```
+
+The app listens on `127.0.0.1:3000`. Put a TLS reverse proxy (Caddy, nginx, Traefik) in front of it: the admin login only works over HTTPS in production. Details, offline deployment and update routine: [Operations](docs/OPERATIONS.md#docker-deployment).
+
+## Local Development
+
+Requirements: Node.js 24 LTS (see `.nvmrc`), npm 11+.
+
+```bash
+cp .env.example .env.local
 npm install
-npm run dev
+npm run dev          # http://localhost:3000
+npm run build        # production build check
 ```
 
-Production build check:
-
-```bash
-npm run build
-```
-
-App default URL: `http://localhost:3000`
+- Public forms: `/`
+- Admin dashboard: `/dashboard` (credentials `DASHBOARD_USER` / `DASHBOARD_PASSWORD`)
 
 ## Configuration
 
-1. Copy the template:
-```bash
-cp .env.example .env.local
-```
-2. Fill SMTP, routing, and password values for your environment.
-3. Keep secrets local. Do not commit `.env.local` or runtime data directories.
+All settings are environment variables; see `.env.example`. Most of them can later be changed in the dashboard (stored in the database, which takes precedence over the environment). The most important ones:
 
-Reference file: `.env.example`
+| Variable | Purpose |
+| --- | --- |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL` | Outgoing mail |
+| `SB_EMAIL` | Default recipient (HR) |
+| `DASHBOARD_USER`, `DASHBOARD_PASSWORD` | Admin login |
+| `PUBLIC_PASSWORD` | Password for the public forms |
+| `SESSION_SECRET` | Signing key for admin sessions (≥ 32 random chars, `openssl rand -hex 32`) |
+| `EMPLOYERS` | Initial employer list (JSON array) |
 
-## Docker Setup
-
-For containerized deployment the repository ships a multi-stage `Dockerfile` and two Compose files. The image runs the Next.js standalone server as a non-root user with persistent volumes for the SQLite database and uploaded files.
-
-Prerequisites:
-
-- Docker 24+
-- Docker Compose v2 (`docker compose` plugin)
-- A populated `.env.local` (see [Configuration](#configuration))
-
-### Quick start (local build)
-
-Build the image from source and start the container:
-
-```bash
-docker compose up --build
-```
-
-The app is available at `http://localhost:3000`. Data and uploads are persisted in the named volumes `krankmelder-data` and `krankmelder-uploads` and survive container restarts.
-
-Stop and remove the container (volumes are kept):
-
-```bash
-docker compose down
-```
-
-### Production-style run
-
-`docker-compose.prod.yml` expects a prebuilt image (`pull_policy: never`) and adds an HTTP healthcheck against `http://127.0.0.1:3000/`. Typical workflow:
-
-```bash
-docker build -t blueotter-krankmelder:latest .
-docker compose -f docker-compose.prod.yml up -d
-```
-
-To move the image to an offline target host, export and import it:
-
-```bash
-# on the build machine:
-docker save blueotter-krankmelder:latest -o blueotter-krankmelder.tar
-
-# on the target host:
-docker load -i blueotter-krankmelder.tar
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Notes
-
-- `.env.local` is read at container start via `env_file` and is excluded from the image by `.dockerignore`, so secrets never end up baked into the image.
-- `next.config.ts` enables `output: "standalone"` and force-includes `better-sqlite3` in the file trace. This produces a slim runtime image and ensures the native SQLite bindings are present.
-- The container runs as a non-root user (`nextjs:nodejs`, UID 1001) and uses `tini` as PID 1 for proper signal handling.
-- `docker compose down -v` removes the named volumes and therefore drops all persisted reports and uploads. Run this only if you intentionally want a clean slate.
-
-## Data and Security Notes
-
-- This repository is prepared for code-first publishing.
-- Runtime data such as uploads, SQLite data files, and local environment secrets are excluded from version control.
-- Do not place productive personal data in repository-tracked files.
+Never commit `.env.local` or runtime data (`data/`, `uploads/`).
 
 ## Project Scope
 
-In scope:
-
-- Municipal reporting workflows and supporting admin operations.
-- Practical, secure, and maintainable software delivery for public-sector teams.
-
-Out of scope:
-
-- External HR/legal systems integration not implemented in this repository.
-- Policy/legal interpretation beyond technical implementation guidance.
+In scope: municipal reporting workflows and supporting admin operations.
+Out of scope: integration with external HR/payroll systems, legal interpretation.
 
 ## Author
 

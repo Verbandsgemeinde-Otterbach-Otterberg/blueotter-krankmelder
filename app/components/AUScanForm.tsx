@@ -120,7 +120,7 @@ export default function AUScanForm() {
           au_scan: null,
           remarks: '',
         });
-        router.push(`/success?id=${data.submissionId}`);
+        router.push(`/success?id=${data.submissionId}&t=${encodeURIComponent(data.downloadToken || '')}`);
       } else {
         setMessage({ type: 'error', text: data.error || 'Ein Fehler ist aufgetreten' });
       }

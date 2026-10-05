@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { getAllEmployerSettings, setEmployerSettings, getAllEmployers } from '@/app/lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     // Return a merged list of all employers and any existing settings
     const employers = getAllEmployers();
@@ -31,6 +35,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const { employer, sb_emails, sb_email, subject_prefix, send_global_copy, requires_remarks } = await request.json();
     if (!employer) {

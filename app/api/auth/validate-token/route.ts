@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalSetting } from '@/app/lib/db';
+import { clientIp, rateLimit, safeCompare } from '@/app/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    if (!rateLimit(`token:${clientIp(req)}`, 20, 15 * 60 * 1000)) {
+      return NextResponse.json({ success: false, error: 'Too many attempts' }, { status: 429 });
+    }
     const body = await req.json();
     const { token } = body || {};
     
@@ -16,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No token configured' }, { status: 403 });
     }
 
-    if (String(token) === String(expected)) {
+    if (safeCompare(String(token), String(expected))) {
       return NextResponse.json({ success: true });
     }
 

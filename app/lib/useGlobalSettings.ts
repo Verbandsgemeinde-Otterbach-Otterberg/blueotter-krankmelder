@@ -17,13 +17,13 @@ export function useGlobalSettings() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch('/api/global-settings');
+        const res = await fetch('/api/public-settings');
         const data = await res.json();
         if (data.success && data.data) {
           setSettings({
-            appName: data.data.app_name?.value || settings.appName,
-            appSlogan: data.data.app_slogan?.value || settings.appSlogan,
-            globalSbEmail: data.data.global_sb_email?.value || '',
+            appName: data.data.appName || settings.appName,
+            appSlogan: data.data.appSlogan || settings.appSlogan,
+            globalSbEmail: '',
           });
         }
       } catch (err) {

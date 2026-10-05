@@ -1,26 +1,28 @@
+# Production run with a prebuilt image (e.g. transferred via docker save/load):
+#   docker compose -f docker-compose.prod.yml up -d
 services:
   krankmelder:
     image: blueotter-krankmelder:latest
     pull_policy: never
     container_name: blueotter-krankmelder
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    init: true
     env_file:
       - .env.local
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: /app/data/krankmeldungen.db
-      UPLOAD_DIR: /app/uploads
+    ports:
+      # Only reachable locally; put a TLS reverse proxy in front (admin login requires HTTPS).
+      - "127.0.0.1:3000:3000"
     volumes:
       - krankmelder-data:/app/data
       - krankmelder-uploads:/app/uploads
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Healthcheck is defined in the Dockerfile (GET /api/public-settings).
 
 volumes:
   krankmelder-data:

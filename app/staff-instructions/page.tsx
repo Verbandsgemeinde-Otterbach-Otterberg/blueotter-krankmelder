@@ -93,24 +93,24 @@ export default function StaffInstructions() {
                 Im Reiter „Meldungen" im Dashboard sehen Sie alle eingereichten Krankmeldungen. Sie können diese filtern nach:
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li>Status (Laufend, Akzeptiert, Abgelehnt)</li>
+                <li>Status (Neu, Bearbeitet)</li>
                 <li>Arbeitgeber</li>
                 <li>Zeitraum (heute, diese Woche, dieser Monat, benutzerdefiniert)</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-900 mt-6">Meldung bearbeiten:</h3>
               <ol className="list-decimal list-inside space-y-2">
-                <li>Klicken Sie auf eine Meldung in der Liste</li>
-                <li>Überprüfen Sie alle Daten (Name, Arbeitgeber, Krankheitstyp, Zeitraum)</li>
-                <li>Tätigen Sie Anpassungen falls notwendig</li>
-                <li>Laden Sie angehängte Dateien herunter oder löschen Sie diese</li>
+                <li>Öffnen Sie die Daten oder das PDF einer Meldung in der Liste</li>
+                <li>Überprüfen Sie alle Daten (Name, Arbeitgeber, Meldungstyp, Zeitraum)</li>
+                <li>Übernehmen Sie die Meldung in Ihre Personalverwaltung</li>
+                <li>Markieren Sie die Meldung anschließend mit „✓ Bearbeitet“</li>
               </ol>
 
               <h3 className="text-lg font-semibold text-gray-900 mt-6">Status ändern:</h3>
               <ul className="list-disc list-inside space-y-2">
-                <li><strong>Akzeptiert:</strong> Meldung wird genehmigt, E-Mail wird an Arbeitgeber gesendet</li>
-                <li><strong>Abgelehnt:</strong> Meldung wird abgelehnt, Benachrichtigung wird versendet</li>
-                <li><strong>Archivieren:</strong> Alte Meldungen in das Archiv verschieben</li>
+                <li><strong>Neu:</strong> Jede eingehende Meldung startet mit diesem Status und wartet auf Bearbeitung</li>
+                <li><strong>Bearbeitet:</strong> Per Klick auf „✓ Bearbeitet“ markieren; Zeitpunkt und Benutzer werden gespeichert. „↩ Neu“ setzt die Meldung zurück</li>
+                <li><strong>Archivieren:</strong> Gefilterte Meldungen eines Arbeitgebers endgültig löschen</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-900 mt-6">PDF-Export:</h3>

@@ -29,7 +29,9 @@ function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS submissions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL,
-      status TEXT DEFAULT 'pending',
+      status TEXT DEFAULT 'new',
+      processed_at DATETIME,
+      processed_by TEXT,
       employee_name TEXT,
       employee_email TEXT,
       employee_id TEXT,
@@ -189,6 +191,20 @@ function initializeDatabase() {
     }
   } catch (e) {
     console.error('Error ensuring employer_settings columns exist:', e);
+  }
+
+  // Processing status (issue #3): add columns and move legacy statuses to 'new'
+  try {
+    const subCols = db.prepare("PRAGMA table_info('submissions')").all() as any[];
+    if (!subCols.some((c: any) => c.name === 'processed_at')) {
+      db.exec('ALTER TABLE submissions ADD COLUMN processed_at DATETIME');
+    }
+    if (!subCols.some((c: any) => c.name === 'processed_by')) {
+      db.exec('ALTER TABLE submissions ADD COLUMN processed_by TEXT');
+    }
+    db.exec("UPDATE submissions SET status = 'new' WHERE status IN ('accepted', 'pending') OR status IS NULL");
+  } catch (e) {
+    console.error('Error migrating submission status:', e);
   }
 
   // Migrate employers from env if table is empty

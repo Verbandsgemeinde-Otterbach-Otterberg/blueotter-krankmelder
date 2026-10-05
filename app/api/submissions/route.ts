@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { getDb } from '@/app/lib/db';
 
 export async function GET(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get('type');
@@ -10,8 +14,8 @@ export async function GET(request: NextRequest) {
     const start_date = searchParams.get('start_date');
     const end_date = searchParams.get('end_date');
     const employer = searchParams.get('employer');
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '100') || 100, 1), 500);
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0') || 0, 0);
     const sort_field = searchParams.get('sort_field') || 'created_at';
     const sort_direction = searchParams.get('sort_direction') || 'desc';
 

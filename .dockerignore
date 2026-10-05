@@ -1,24 +1,24 @@
 **/node_modules
 **/.next
 **/.git
+**/.github
 **/.gitignore
 **/.vscode
 **/.idea
 **/.DS_Store
 
-# Build / Cache
+# Build / cache
 **/dist
 **/build
 **/out
 **/coverage
 **/*.tsbuildinfo
 
-# Env & secrets (kommen über --env-file ins Image-Runtime)
-.env
-.env.local
-.env.*.local
+# Env & secrets (provided at runtime via env_file, never baked into the image)
+.env*
+!.env.example
 
-# Runtime-Daten und Backups
+# Runtime data and backups
 data/
 uploads/
 artifacts/
@@ -27,7 +27,7 @@ artifacts/
 *.db-wal
 *.backup
 
-# Lokale Dokumente
+# Local documents
 doku2.md
 manual.html
 manual-assets/
@@ -38,9 +38,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Docker selbst
+# Docker itself
 Dockerfile
 .dockerignore
-docker-compose.yml
+docker-compose*.yml
 *.ps1
 *.tar

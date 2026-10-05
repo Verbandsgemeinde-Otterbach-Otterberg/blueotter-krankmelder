@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Save, AlertCircle } from 'lucide-react';
+import { escapeHtml } from '@/app/lib/markdown';
 
 interface MarkdownEditorProps {
   slug: string;
@@ -143,7 +144,7 @@ export default function MarkdownEditor({ slug, onSave }: MarkdownEditorProps) {
 function MarkdownPreview({ content }: { content: string }) {
   const renderMarkdown = (markdown: string) => {
     // Simple markdown rendering
-    let html = markdown
+    let html = escapeHtml(markdown)
       .replace(/^### (.*?)$/gm, '<h3 class="text-lg font-bold mt-4 mb-2">$1</h3>')
       .replace(/^## (.*?)$/gm, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>')
       .replace(/^# (.*?)$/gm, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>')
