@@ -38,7 +38,7 @@ Detailed docs:
 
 Prerequisites:
 
-- Node.js 20+
+- Node.js 22.13+ (Node.js 24 LTS recommended; see `.nvmrc`)
 - npm 10+
 
 Install and run:

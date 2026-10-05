@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/app/lib/db';
+import { getSession, verifyDownloadToken } from '@/app/lib/auth';
 import jsPDF from 'jspdf';
 import fs from 'fs';
 import { formatDateInTimeZone, formatDateTimeInTimeZone } from '@/app/lib/timezone';
@@ -12,6 +13,13 @@ export async function GET(
   try {
     const { id } = await params;
     const submissionId = parseInt(id);
+
+    if (
+      isNaN(submissionId) ||
+      !(getSession(request) || verifyDownloadToken(submissionId, request.nextUrl.searchParams.get('t')))
+    ) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
+    }
 
     const db = getDb();
 

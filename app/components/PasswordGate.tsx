@@ -42,12 +42,16 @@ export default function PasswordGate({
     const checkAuth = async () => {
       // First check: saved credentials for admin
       if (requireUsername) {
-        const savedAuth = localStorage.getItem('sb-auth-token');
-        const savedUsername = localStorage.getItem('sb-username');
-        if (savedAuth === 'authenticated' && savedUsername) {
-          setIsAuthenticated(true);
-          setIsMounted(true);
-          return;
+        try {
+          const res = await fetch('/api/auth/session');
+          const json = await res.json();
+          if (json?.authenticated) {
+            setIsAuthenticated(true);
+            setIsMounted(true);
+            return;
+          }
+        } catch {
+          // not authenticated
         }
       }
 
@@ -94,15 +98,10 @@ export default function PasswordGate({
       const res = await fetch('/api/auth/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: requireUsername ? username : undefined, password }),
+        body: JSON.stringify({ username: requireUsername ? username : undefined, password, remember: rememberMe }),
       });
       const json = await res.json();
       if (json.success) {
-        // Save credentials if Remember Me is checked (only for admin login)
-        if (rememberMe && requireUsername) {
-          localStorage.setItem('sb-auth-token', 'authenticated');
-          localStorage.setItem('sb-username', username);
-        }
         setIsAuthenticated(true);
         setPassword('');
         setUsername('');

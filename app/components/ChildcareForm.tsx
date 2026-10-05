@@ -131,7 +131,7 @@ export default function ChildcareForm() {
           au_file: null,
           remarks: '',
         });
-        router.push(`/success?id=${data.submissionId}`);
+        router.push(`/success?id=${data.submissionId}&t=${encodeURIComponent(data.downloadToken || '')}`);
       } else {
         setMessage({ type: 'error', text: data.error || data.message || 'Ein Fehler ist aufgetreten' });
       }

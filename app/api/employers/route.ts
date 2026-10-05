@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { getAllEmployers, updateEmployer, deleteEmployer } from '@/app/lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const employers = getAllEmployers();
     return NextResponse.json({ success: true, data: employers });
@@ -12,6 +16,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const { id, name, active, color } = await request.json();
     if (!id || !name) {
@@ -26,6 +33,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const { id } = await request.json();
     if (!id) {

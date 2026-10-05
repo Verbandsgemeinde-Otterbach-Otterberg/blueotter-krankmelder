@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createDownloadToken } from '@/app/lib/auth';
 import { getDb } from '@/app/lib/db';
 import { validateChildcareDateRange, validateEmail } from '@/app/lib/validation';
 import { sendEmailToSB, sendConfirmationToEmployee } from '@/app/lib/email';
@@ -196,6 +197,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         submissionId,
+        downloadToken: createDownloadToken(submissionId),
         message: 'Kindkrank-Meldung erfolgreich eingereicht',
         daysCount: validation.daysCount,
       },

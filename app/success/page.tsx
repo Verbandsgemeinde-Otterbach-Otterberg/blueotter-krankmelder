@@ -10,13 +10,14 @@ import { Download } from 'lucide-react';
 export default function SuccessPage() {
   const searchParams = useSearchParams();
   const submissionId = searchParams.get('id');
+  const downloadToken = searchParams.get('t') || '';
   const [downloading, setDownloading] = useState(false);
 
   const downloadPDF = async () => {
     if (!submissionId) return;
     setDownloading(true);
     try {
-      const response = await fetch(`/api/submissions/${submissionId}/pdf`);
+      const response = await fetch(`/api/submissions/${encodeURIComponent(submissionId)}/pdf?t=${encodeURIComponent(downloadToken)}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

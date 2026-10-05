@@ -2,7 +2,7 @@
 
 ## Runtime Requirements
 
-- Node.js 20+
+- Node.js 22.13+ (Node.js 24 LTS recommended; see `.nvmrc`)
 - npm 10+
 - Writable local directories for runtime:
   - `data/`

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { getDb } from '@/app/lib/db';
 import { getConfiguredTimeZone } from '@/app/lib/server-timezone';
 import { toIsoDateInTimeZone } from '@/app/lib/timezone';
 
 export async function GET(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const db = getDb();
     const rows = db.prepare('SELECT * FROM submissions ORDER BY created_at DESC').all() as any[];

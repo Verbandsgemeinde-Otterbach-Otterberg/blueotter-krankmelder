@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { escapeHtml } from '@/app/lib/markdown';
 
 export default function InstructionsPage() {
     // Import global settings from DB
@@ -99,7 +100,7 @@ function MarkdownContent({ content }: { content: string }) {
 
 function renderMarkdownToHTML(markdown: string): string {
   // Simple markdown to HTML converter
-  let html = markdown
+  let html = escapeHtml(markdown)
     .split('\n')
     .map(line => {
       // Headings

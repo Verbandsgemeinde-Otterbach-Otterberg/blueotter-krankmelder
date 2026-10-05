@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { getDb } from '@/app/lib/db';
 import fs from 'fs';
 import path from 'path';
 
 export async function POST(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_DELETE_ALL !== 'true') {
+    return NextResponse.json({ success: false, error: 'In Produktion deaktiviert' }, { status: 403 });
+  }
+
   try {
     const db = getDb();
 

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/app/lib/db';
 import { sendTestEmail } from '@/app/lib/email';
+import { clientIp, rateLimit } from '@/app/lib/auth';
+import { escapeHtml } from '@/app/lib/markdown';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const email = body.email?.trim();
+    if (!rateLimit(`pwreq:${clientIp(request)}`, 3, 60 * 60 * 1000) || !rateLimit('pwreq:global', 10, 60 * 60 * 1000)) {
+      return NextResponse.json({ success: false, error: 'Zu viele Anfragen' }, { status: 429 });
+    }
+    const body = await request.json().catch(() => ({}));
+    const email = typeof body?.email === 'string' ? body.email.trim() : '';
 
     console.log('Password request received for email:', email);
 
@@ -79,13 +84,13 @@ export async function POST(request: NextRequest) {
     // Send email with credentials
     const subject = `${appName} - Zugangsanforderung bestätigt`;
     const html = `
-      <h1>${appName}</h1>
+      <h1>${escapeHtml(appName)}</h1>
       <p>Hallo,</p>
-      <p>Sie haben die Zugangsanforderung für das ${appName} gestellt.</p>
+      <p>Sie haben die Zugangsanforderung für das ${escapeHtml(appName)} gestellt.</p>
       <h3>Ihre Anmeldedaten:</h3>
       <p>
-        <strong>Benutzername:</strong> ${dashboardUser}<br>
-        <strong>Passwort:</strong> ${adminPassword}
+        <strong>Benutzername:</strong> ${escapeHtml(dashboardUser)}<br>
+        <strong>Passwort:</strong> ${escapeHtml(adminPassword)}
       </p>
       <p>Bitte ändern Sie Ihr Passwort nach dem ersten Login.</p>
       <p>Mit freundlichen Grüßen,<br>Ihr Krankmeldungssystem</p>

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { updateEmployerOrder } from '@/app/lib/db';
 
 export async function POST(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const { ids } = await request.json();
     if (!Array.isArray(ids)) {

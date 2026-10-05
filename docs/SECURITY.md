@@ -48,10 +48,14 @@ Operational recommendations:
 
 ## API and Access Considerations
 
-- Separate public flow access from admin dashboard access.
-- Protect admin credentials and validate auth paths.
-- Restrict or disable debug endpoints in production.
-- Add rate limiting and brute-force protections at edge/proxy level.
+- Admin login issues an HMAC-signed, `HttpOnly`, `SameSite=Strict` session cookie (`sb-session`). Every admin, debug and data API enforces it server-side (`requireAdmin` in `app/lib/auth.ts`); changing the admin credentials invalidates all sessions.
+- Set `SESSION_SECRET` (min. 32 random chars). If unset, a random secret is generated and stored in the database.
+- Submission PDFs are only available to admins or via a short-lived signed download token issued at submission time.
+- `/api/global-settings` never returns secrets (SMTP/admin/public passwords, access token); saving an empty secret keeps the stored value.
+- Debug "delete all" is disabled in production unless `ENABLE_DEBUG_DELETE_ALL=true`.
+- CMS markdown is HTML-escaped before rendering; a restrictive CSP and further security headers are set in `next.config.ts`.
+- Login endpoints are rate limited in-process; additionally rate limit at the edge/proxy.
+- Public form submission endpoints are intentionally unauthenticated; the public password gate is UI-only. Protect them at the proxy (rate limiting, bot protection) if abuse is a concern.
 
 ## Incident Response Basics
 

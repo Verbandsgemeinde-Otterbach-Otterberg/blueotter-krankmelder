@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/app/lib/auth';
 import { getAllEmployers, addEmployer, getAllEmployerSettings } from '@/app/lib/db';
 
 export async function GET() {
@@ -33,7 +34,10 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const { name } = await request.json();
     if (!name || typeof name !== 'string') {

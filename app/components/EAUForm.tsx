@@ -102,7 +102,7 @@ export default function EAUForm() {
           is_first_submission: true,
           remarks: '',
         });
-        router.push(`/success?id=${data.submissionId}`);
+        router.push(`/success?id=${data.submissionId}&t=${encodeURIComponent(data.downloadToken || '')}`);
       } else {
         setMessage({ type: 'error', text: data.error || 'Ein Fehler ist aufgetreten' });
       }

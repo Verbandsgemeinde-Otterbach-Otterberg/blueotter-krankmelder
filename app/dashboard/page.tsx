@@ -86,10 +86,12 @@ function DashboardContent() {
   const [configuredTimeZone, setConfiguredTimeZone] = useState<string>(DEFAULT_TIMEZONE);
 
   // Logout handler
-  const handleLogout = () => {
-    localStorage.removeItem('sb-auth-token');
-    localStorage.removeItem('sb-username');
-    window.location.reload();
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      window.location.reload();
+    }
   };
 
   useEffect(() => {
