@@ -1,10 +1,9 @@
-# Local build & run: docker compose up -d --build
+# Production run with a prebuilt image (e.g. transferred via docker save/load):
+#   docker compose -f docker-compose.prod.yml up -d
 services:
   krankmelder:
     image: blueotter-krankmelder:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    pull_policy: never
     container_name: blueotter-krankmelder
     restart: unless-stopped
     init: true
@@ -23,6 +22,7 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # Healthcheck is defined in the Dockerfile (GET /api/public-settings).
 
 volumes:
   krankmelder-data:
