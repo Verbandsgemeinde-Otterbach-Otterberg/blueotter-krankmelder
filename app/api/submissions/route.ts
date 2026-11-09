@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/app/lib/auth';
 import { getDb } from '@/app/lib/db';
+import { getConfiguredTimeZone } from '@/app/lib/server-timezone';
+import { addCalendarDays, isCalendarDate, startOfDayInTimeZone } from '@/app/lib/timezone';
 
 export async function GET(request: NextRequest) {
   const denied = requireAdmin(request);
@@ -19,6 +21,13 @@ export async function GET(request: NextRequest) {
     const sort_field = searchParams.get('sort_field') || 'created_at';
     const sort_direction = searchParams.get('sort_direction') || 'desc';
 
+    if ((start_date && !isCalendarDate(start_date)) || (end_date && !isCalendarDate(end_date)) ||
+        (start_date && end_date && start_date > end_date)) {
+      return NextResponse.json({ error: 'Ungültiger Datumsbereich' }, { status: 400 });
+    }
+    const timeZone = getConfiguredTimeZone();
+    const startUtc = start_date ? startOfDayInTimeZone(start_date, timeZone) : null;
+    const endUtc = end_date ? startOfDayInTimeZone(addCalendarDays(end_date, 1), timeZone) : null;
     const db = getDb();
 
     let query = 'SELECT * FROM submissions WHERE 1=1';
@@ -40,14 +49,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (start_date) {
-      query += ' AND created_at >= ?';
-      params.push(start_date);
+      query += ' AND julianday(created_at) >= julianday(?)';
+      params.push(startUtc);
     }
 
     if (end_date) {
-      const endVal = end_date.length === 10 ? `${end_date}T23:59:59` : end_date;
-      query += ' AND created_at <= ?';
-      params.push(endVal);
+      query += ' AND julianday(created_at) < julianday(?)';
+      params.push(endUtc);
     }
 
     if (employer) {
@@ -86,14 +94,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (start_date) {
-      countQuery += ' AND created_at >= ?';
-      countParams.push(start_date);
+      countQuery += ' AND julianday(created_at) >= julianday(?)';
+      countParams.push(startUtc);
     }
 
     if (end_date) {
-      const endVal = end_date.length === 10 ? `${end_date}T23:59:59` : end_date;
-      countQuery += ' AND created_at <= ?';
-      countParams.push(endVal);
+      countQuery += ' AND julianday(created_at) < julianday(?)';
+      countParams.push(endUtc);
     }
 
     if (employer) {
