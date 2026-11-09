@@ -32,11 +32,6 @@ export default function PasswordGate({
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [requestingPassword, setRequestingPassword] = useState(false);
-  const [requestEmail, setRequestEmail] = useState('');
-  const [requestStatus, setRequestStatus] = useState('');
-  const [showRequestForm, setShowRequestForm] = useState(false);
-
   // Combined mount + token check on mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -114,30 +109,6 @@ export default function PasswordGate({
       setError('Serverfehler bei der Authentifizierung');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleRequestPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setRequestStatus('');
-    setRequestingPassword(true);
-    try {
-      const res = await fetch('/api/auth/request-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}), // No email needed - uses global SB_EMAIL
-      });
-      const json = await res.json();
-      if (json.success) {
-        setRequestStatus('Zugangsdaten wurden versendet.');
-      } else {
-        setRequestStatus(json.error || 'Fehler beim Versand.');
-      }
-    } catch (err) {
-      console.error('Password request failed', err);
-      setRequestStatus('Serverfehler beim Versand.');
-    } finally {
-      setRequestingPassword(false);
     }
   };
 
@@ -249,40 +220,9 @@ export default function PasswordGate({
           </button>
 
           {requireUsername && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              {!showRequestForm && (
-                <button
-                  type="button"
-                  onClick={() => setShowRequestForm(true)}
-                  className="w-full text-blue-600 hover:text-blue-800 font-semibold underline mb-3"
-                >
-                  Passwort vergessen?
-                </button>
-              )}
-              {showRequestForm && (
-                <form onSubmit={handleRequestPassword} className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Passwort anfordern</label>
-                  <p className="text-xs text-gray-600 mb-3">Klicken Sie auf den Button, um ein Passwort an die registrierte Adresse zu versendet:</p>
-                  <button
-                    type="submit"
-                    disabled={requestingPassword}
-                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold py-2 px-4 rounded-lg transition"
-                  >
-                    {requestingPassword ? 'Wird versendet...' : 'Passwort versendet'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRequestForm(false)}
-                    className="w-full text-gray-500 hover:text-gray-700 font-semibold underline mt-2"
-                  >
-                    Abbrechen
-                  </button>
-                  {requestStatus && (
-                    <div className="p-2 bg-gray-100 border border-gray-300 rounded text-gray-700 text-sm mt-2">{requestStatus}</div>
-                  )}
-                </form>
-              )}
-            </div>
+            <p className="mt-4 text-sm text-gray-600">
+              Passwort vergessen? Bitte wenden Sie sich an die Administration.
+            </p>
           )}
         </form>
 

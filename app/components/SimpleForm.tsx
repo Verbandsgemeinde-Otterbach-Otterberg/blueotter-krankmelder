@@ -6,6 +6,8 @@ import SuccessModal from './SuccessModal';
 import Tooltip from './Tooltip';
 import { useRouter } from 'next/navigation';
 import formatDDMMYYYY from '@/app/lib/format';
+import { simpleSubmissionDay } from '@/app/lib/timezone';
+import { useGlobalSettings } from '@/app/lib/useGlobalSettings';
 
 interface SimpleSubmissionForm {
   employee_name: string;
@@ -23,6 +25,7 @@ interface EmployerOption {
 }
 
 export default function SimpleForm() {
+  const { timeZone, loading: settingsLoading } = useGlobalSettings();
   const [employers, setEmployers] = useState<EmployerOption[]>([]);
   const [availableDates, setAvailableDates] = useState<{value: string, label: string}[]>([]);
   const [formData, setFormData] = useState<SimpleSubmissionForm>({
@@ -62,22 +65,27 @@ export default function SimpleForm() {
   }, []);
 
   useEffect(() => {
+    if (settingsLoading) return;
     const calculateAvailableDates = () => {
-      const today = new Date();
+      const today = simpleSubmissionDay(new Date(), timeZone);
       const dates: {value:string,label:string}[] = [];
-      if (today.getDay() >= 1 && today.getDay() <= 5) {
+      if (today) {
         dates.push({
-          value: today.toISOString().split('T')[0],
+          value: today,
           label: `Heute (${formatDDMMYYYY(today)})`
         });
       }
       setAvailableDates(dates);
-      if (dates.length > 0) {
-        setFormData(prev => ({ ...prev, date: dates[0].value }));
-      }
+      setFormData(prev => ({ ...prev, date: today || '' }));
     };
     calculateAvailableDates();
-  }, []);
+    const timer = setInterval(calculateAvailableDates, 30_000);
+    window.addEventListener('focus', calculateAvailableDates);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', calculateAvailableDates);
+    };
+  }, [timeZone, settingsLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -86,6 +94,11 @@ export default function SimpleForm() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (formData.date !== simpleSubmissionDay(new Date(), timeZone)) {
+      setFormData(prev => ({ ...prev, date: simpleSubmissionDay(new Date(), timeZone) || '' }));
+      setMessage({ type: 'error', text: 'Das Datum hat sich geändert. Bitte prüfen Sie Ihre Angaben und senden Sie erneut.' });
+      return;
+    }
     setLoading(true);
     setMessage(null);
 
