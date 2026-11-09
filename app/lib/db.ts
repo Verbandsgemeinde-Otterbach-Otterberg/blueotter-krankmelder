@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { HASHED_SETTING_KEYS, hashSecret, isSecretHash } from './passwords';
 
 const dbDir = path.join(process.cwd(), 'data');
 const dbPath = path.join(dbDir, 'krankmeldungen.db');
@@ -207,6 +208,19 @@ function initializeDatabase() {
     console.error('Error migrating submission status:', e);
   }
 
+  // Import bootstrap credentials once and hash legacy values atomically.
+  // Existing passwords keep working; hashes are never returned to clients.
+  db.transaction(() => {
+    const read = db.prepare('SELECT value FROM global_settings WHERE key = ?');
+    const save = db.prepare(`INSERT INTO global_settings (key, value)
+      VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`);
+    for (const key of HASHED_SETTING_KEYS) {
+      const row = read.get(key) as { value: string } | undefined;
+      const value = row?.value || process.env[key];
+      if (value && !isSecretHash(value)) save.run(key, hashSecret(value));
+    }
+  })();
+
   // Migrate employers from env if table is empty
   const employerCount = db.prepare('SELECT COUNT(*) as count FROM employers').get() as { count: number };
   if (employerCount.count === 0) {
@@ -323,7 +337,7 @@ export function setGlobalSetting(key: string, value: string) {
     ON CONFLICT(key) DO UPDATE SET
       value = excluded.value,
       updated_at = CURRENT_TIMESTAMP
-  `).run(key, value);
+  `).run(key, HASHED_SETTING_KEYS.has(key) && value ? hashSecret(value) : value);
 }
 
 export function setMultipleGlobalSettings(settings: Record<string, string>) {
@@ -337,7 +351,7 @@ export function setMultipleGlobalSettings(settings: Record<string, string>) {
   `);
   
   for (const [key, value] of Object.entries(settings)) {
-    stmt.run(key, value);
+    stmt.run(key, HASHED_SETTING_KEYS.has(key) && value ? hashSecret(value) : value);
   }
 }
 

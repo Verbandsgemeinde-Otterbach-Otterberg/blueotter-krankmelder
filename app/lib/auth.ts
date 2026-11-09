@@ -53,7 +53,7 @@ export function safeCompare(a: unknown, b: unknown): boolean {
 export function getAdminCredentials() {
   return {
     user: getGlobalSetting('DASHBOARD_USER') || process.env.DASHBOARD_USER || '',
-    password: getGlobalSetting('DASHBOARD_PASSWORD') || process.env.DASHBOARD_PASSWORD || '',
+    password: getGlobalSetting('DASHBOARD_PASSWORD') || '',
   };
 }
 

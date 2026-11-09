@@ -1,9 +1,9 @@
 export const DEFAULT_TIMEZONE = 'Europe/Berlin';
 
-const SQLITE_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+const SQLITE_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function toDate(input: string | number | Date): Date {
+export function toDate(input: string | number | Date): Date {
   if (input instanceof Date) return input;
   if (typeof input === 'string') {
     const value = input.trim();
@@ -12,6 +12,39 @@ function toDate(input: string | number | Date): Date {
     }
   }
   return new Date(input);
+}
+
+export function isCalendarDate(value: string): boolean {
+  return DATE_ONLY_RE.test(value) && !Number.isNaN(Date.parse(value)) &&
+    new Date(value).toISOString().slice(0, 10) === value;
+}
+
+export function addCalendarDays(value: string, days: number): string {
+  if (!isCalendarDate(value)) throw new Error('Ungültiges Datum');
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+// Find the first instant belonging to a calendar day in the selected zone.
+// Searching UTC seconds handles 23/25-hour DST days without fixed offsets.
+export function startOfDayInTimeZone(day: string, timeZone: string): string {
+  if (!isCalendarDate(day)) throw new Error('Ungültiges Datum');
+  const midnight = Date.parse(`${day}T00:00:00Z`) / 1000;
+  let low = midnight - 36 * 3600;
+  let high = midnight + 36 * 3600;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (toIsoDateInTimeZone(mid * 1000, timeZone) < day) low = mid + 1;
+    else high = mid;
+  }
+  return new Date(low * 1000).toISOString();
+}
+
+export function simpleSubmissionDay(now: Date, timeZone: string): string | null {
+  const day = toIsoDateInTimeZone(now, timeZone);
+  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
+  return weekday >= 1 && weekday <= 5 ? day : null;
 }
 
 export function normalizeTimeZone(value?: string | null): string {
