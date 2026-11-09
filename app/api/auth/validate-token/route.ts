@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalSetting } from '@/app/lib/db';
-import { clientIp, rateLimit, safeCompare } from '@/app/lib/auth';
+import { clientIp, rateLimit } from '@/app/lib/auth';
+import { verifySecret } from '@/app/lib/passwords';
 
 export async function POST(req: NextRequest) {
   try {
-    if (!rateLimit(`token:${clientIp(req)}`, 20, 15 * 60 * 1000)) {
+    if (!rateLimit(`token:${clientIp(req)}`, 20, 15 * 60 * 1000) || !rateLimit('token:global', 100, 15 * 60 * 1000)) {
       return NextResponse.json({ success: false, error: 'Too many attempts' }, { status: 429 });
     }
     const body = await req.json();
@@ -14,13 +15,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Token required' }, { status: 400 });
     }
 
-    const expected = getGlobalSetting('PUBLIC_ACCESS_TOKEN') || process.env.PUBLIC_ACCESS_TOKEN || '';
+    const expected = getGlobalSetting('PUBLIC_ACCESS_TOKEN') || '';
     
     if (!expected) {
       return NextResponse.json({ success: false, error: 'No token configured' }, { status: 403 });
     }
 
-    if (safeCompare(String(token), String(expected))) {
+    if (verifySecret(token, expected)) {
       return NextResponse.json({ success: true });
     }
 
