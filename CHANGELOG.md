@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.1 – 2026-11-09
+
+- Security dependencies: Next.js 16.4.5, Nodemailer 10.4.0 and DOMPurify 3.4.17 (transitive); lockfile refreshed.
+- Passwords and access tokens are migrated to salted scrypt hashes without changing credentials. Existing admin sessions expire once; log in again.
+- Password recovery no longer sends credentials by email; the obsolete endpoint returns HTTP 410.
+- Fixed simple reports just after midnight being assigned the previous UTC date. Forms use the configured timezone, refresh on day changes and reject stale dates before writing or sending email.
+- Date filters use local-day UTC boundaries, including 23/25-hour DST days; offset-free SQLite timestamps are consistently read as UTC.
+- Added regression tests for midnight, DST boundaries, stale dates and password verification; Docker builds run them.
+- Existing reports and historical illness dates are retained. Rotate previously exposed credentials separately.
+
 ## v0.2.0 – 2026-10-05
 
 ### ⚠️ Vor dem Update lesen
