@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalSetting } from '@/app/lib/db';
+import { verifySecret } from '@/app/lib/passwords';
 import {
   SESSION_COOKIE,
   REMEMBER_TTL_SECONDS,
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       // Admin login: require username + password, issue a server-side session
       const admin = getAdminCredentials();
       const userOk = safeCompare(username, admin.user);
-      const passOk = safeCompare(password, admin.password);
+      const passOk = verifySecret(password, admin.password);
       if (admin.user && admin.password && userOk && passOk) {
         const ttl = remember ? REMEMBER_TTL_SECONDS : undefined;
         const res = NextResponse.json({ success: true });
@@ -40,8 +41,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Public login: only password required
-    const publicPassword = getGlobalSetting('PUBLIC_PASSWORD') || process.env.PUBLIC_PASSWORD || '';
-    if (publicPassword && safeCompare(password, publicPassword)) {
+    const publicPassword = getGlobalSetting('PUBLIC_PASSWORD') || '';
+    if (publicPassword && verifySecret(password, publicPassword)) {
       return NextResponse.json({ success: true });
     }
 
