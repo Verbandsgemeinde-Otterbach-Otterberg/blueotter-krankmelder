@@ -16,7 +16,6 @@ const ALLOWED_KEYS = [
   'SMTP_PASS',
   'SMTP_FROM_EMAIL',
   'EMAIL_SUBJECT_PREFIX',
-  'ADMIN_PASSWORD',
   // Security / Auth
   'PUBLIC_PASSWORD',
   'DASHBOARD_USER',
@@ -76,6 +75,9 @@ export async function POST(request: NextRequest) {
     for (const [key, value] of Object.entries(body)) {
       if (!ALLOWED_KEYS.includes(key) || typeof value !== 'string') continue;
       if (SECRET_KEYS.has(key) && value === '') continue;
+      if (SECRET_KEYS.has(key) && value.length > 4096) {
+        return NextResponse.json({ success: false, error: 'Zugangsdaten sind zu lang' }, { status: 400 });
+      }
       settings[key] = value;
     }
     setMultipleGlobalSettings(settings);
